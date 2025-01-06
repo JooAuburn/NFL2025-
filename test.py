@@ -100,7 +100,7 @@ def test(KSTEPS=100):
         raw_data_dict[step]['cov'] = []
         raw_data_dict[step]['abs_positions_mean'] = [] 
 
-        #mean cov and 절대 좌표 저장
+        #mean cov
         abs_positions = nodes_rel_to_nodes_abs(mean.data.cpu().numpy().squeeze().copy(), V_x[-1, :, :].copy())
         raw_data_dict[step]['mean'].append(mean.data.cpu().numpy())
         raw_data_dict[step]['cov'].append(cov.data.cpu().numpy())
@@ -144,14 +144,13 @@ def test(KSTEPS=100):
     ade_ = sum(ade_bigls)/len(ade_bigls)
     fde_ = sum(fde_bigls)/len(fde_bigls)
 
-    # mean_list와 cov_list를 CSV로 저장 and prediciton 저장
+    
     save_full_data_to_csv(raw_data_dict, filename="mean_cov_abs.csv")
     save_raw_data_dict_to_csv(raw_data_dict, "raw_data_dict.csv")
     return ade_,fde_,raw_data_dict
 
 def save_full_data_to_csv(raw_data_dict, filename="mean_cov_abs_data.csv"):
     """
-    모든 Sequence와 Object에 대한 mean, mean_abs, cov 데이터를 CSV에 저장.
     """
     with open(filename, 'w', newline='') as f:
         writer = csv.writer(f)
@@ -171,17 +170,17 @@ def save_full_data_to_csv(raw_data_dict, filename="mean_cov_abs_data.csv"):
                     num_objects = min(mean_seq.shape[1], abs_mean_seq.shape[1], cov_seq.shape[1])
                     num_sequences = mean_seq.shape[0]
 
-                    for obj_idx in range(num_objects):  # Object 순회
-                        for seq_idx in range(num_sequences):  # Sequence 순회
-                            # mean 값 확인
+                    for obj_idx in range(num_objects): 
+                        for seq_idx in range(num_sequences):  
+                      
                             mean_coords = mean_seq[seq_idx, obj_idx]
                             mean_coords = mean_coords if mean_coords.shape == (2,) else [0.0, 0.0]
 
-                            # mean_abs 값 확인
+                   
                             abs_coords = abs_mean_seq[seq_idx, obj_idx]
                             abs_coords = abs_coords if isinstance(abs_coords, (np.ndarray, list)) and len(abs_coords) == 2 else [0.0, 0.0]
 
-                            # cov 값 확인
+                       
                             cov_matrix = cov_seq[seq_idx, obj_idx]
                             cov_matrix = cov_matrix if cov_matrix.shape == (2, 2) else np.zeros((2, 2))
 
@@ -197,28 +196,27 @@ def save_full_data_to_csv(raw_data_dict, filename="mean_cov_abs_data.csv"):
 
 def save_raw_data_dict_to_csv(raw_data_dict, filename="raw_data_dict.csv"):
     """
-    raw_data_dict를 CSV 파일로 저장.
     """
     with open(filename, 'w', newline='') as f:
         writer = csv.writer(f)
-        # CSV 헤더 작성
+
         writer.writerow(["Step", "Type", "Sequence", "Object", "X", "Y"])
         
         for step, data in raw_data_dict.items():
-            # 관찰 데이터 (obs)
+
             for seq_idx, seq in enumerate(data['obs']):
                 for obj_idx, coords in enumerate(seq):
                     writer.writerow([step, "obs", seq_idx, obj_idx, coords[0], coords[1]])
 
-            # 실제 데이터 (trgt)
+
             for seq_idx, seq in enumerate(data['trgt']):
                 for obj_idx, coords in enumerate(seq):
                     writer.writerow([step, "trgt", seq_idx, obj_idx, coords[0], coords[1]])
 
-            # 예측 데이터 (pred)
-            for sample_idx, sample in enumerate(data['pred']):  # 샘플별
-                for seq_idx, seq in enumerate(sample):           # 시퀀스별
-                    for obj_idx, coords in enumerate(seq):       # 객체별
+
+            for sample_idx, sample in enumerate(data['pred']):  
+                for seq_idx, seq in enumerate(sample):         
+                    for obj_idx, coords in enumerate(seq):      
                         writer.writerow([step, f"pred_{sample_idx}", seq_idx, obj_idx, coords[0], coords[1]])
     
     print(f"raw_data_dict saved to {filename}")
